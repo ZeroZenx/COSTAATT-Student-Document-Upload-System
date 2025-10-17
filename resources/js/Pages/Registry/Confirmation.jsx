@@ -34,11 +34,11 @@ export default function Confirmation({ submission }) {
 
                         {/* Success Message */}
                         <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                            Registration Submitted Successfully!
+                            Document(s) Submitted Successfully!
                         </h1>
                         
                         <p className="text-lg text-gray-600 mb-8">
-                            Your registry information has been received and is being processed.
+                            Your information has been received and is being processed.
                         </p>
 
                         {/* Reference Number */}
@@ -67,8 +67,8 @@ export default function Confirmation({ submission }) {
                                     <p className="text-sm text-gray-900">{submission.student_id}</p>
                                 </div>
                                 <div>
-                                    <span className="text-sm font-medium text-gray-500">Programme:</span>
-                                    <p className="text-sm text-gray-900">{submission.programme}</p>
+                                    <span className="text-sm font-medium text-gray-500">Department:</span>
+                                    <p className="text-sm text-gray-900">Registry / Bursar</p>
                                 </div>
                                 <div>
                                     <span className="text-sm font-medium text-gray-500">Academic Year:</span>
@@ -119,7 +119,7 @@ export default function Confirmation({ submission }) {
                             <h3 className="text-lg font-medium text-blue-900 mb-4">What Happens Next?</h3>
                             <div className="text-sm text-blue-800 space-y-2">
                                 <p>• You will receive a confirmation email at {submission.email || 'your registered email'}</p>
-                                <p>• The Registry team will review your registration information</p>
+                                <p>• Our team will review your information</p>
                                 <p>• You will be contacted if additional information is required</p>
                                 <p>• Processing typically takes 3-5 business days</p>
                                 <p>• Your student status will be updated in the system</p>
@@ -133,8 +133,8 @@ export default function Confirmation({ submission }) {
                                 Contact Information
                             </h3>
                             <div className="text-sm text-gray-600 space-y-1">
-                                <p><strong>Registry Department:</strong></p>
-                                <p>Email: <a href="mailto:registry@costaatt.edu.tt" className="text-primary-600 hover:text-primary-500">registry@costaatt.edu.tt</a></p>
+                                <p><strong>Registry / Bursar Department:</strong></p>
+                                <p>Email: <a href="mailto:registry@costaatt.edu.tt" className="text-primary-600 hover:text-primary-500">registry@costaatt.edu.tt</a> and <a href="mailto:bursar@costaatt.edu.tt" className="text-primary-600 hover:text-primary-500">bursar@costaatt.edu.tt</a></p>
                                 <p>Phone: (868) 625-5030 ext. 201</p>
                                 <p>Hours: Monday - Friday, 8:00 AM - 4:00 PM</p>
                             </div>

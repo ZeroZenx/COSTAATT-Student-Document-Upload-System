@@ -9,6 +9,8 @@ export default function Start() {
     const [fundingStatus, setFundingStatus] = useState('');
     const [paymentTermsReady, setPaymentTermsReady] = useState('');
     const [loading, setLoading] = useState(false);
+    const [academicYears, setAcademicYears] = useState([]);
+    const [semesters, setSemesters] = useState([]);
 
     const { data, setData, post, processing, errors } = useForm({
         student_id: '',
@@ -22,6 +24,28 @@ export default function Start() {
         gate_application: null,
         payment_terms_form: null,
     });
+
+    // Fetch academic years and semesters on component mount
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [academicYearsResponse, semestersResponse] = await Promise.all([
+                    fetch('/api/academic-years'),
+                    fetch('/api/semesters')
+                ]);
+                
+                const academicYearsData = await academicYearsResponse.json();
+                const semestersData = await semestersResponse.json();
+                
+                setAcademicYears(academicYearsData);
+                setSemesters(semestersData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        };
+        
+        fetchData();
+    }, []);
 
     const handleFileChange = (fieldName, file) => {
         setData(fieldName, file);
@@ -84,7 +108,7 @@ export default function Start() {
                                 <ul className="text-sm text-yellow-700 space-y-1">
                                     <li>• Insurance Form – must be submitted once per academic year</li>
                                     <li>• GATE Application – must be submitted every semester of registration</li>
-                                    <li>• Payment Terms & Conditions – required every semester</li>
+                                    <li>• Payment Terms & Conditions – one-time submission</li>
                                 </ul>
                             </div>
                         </div>
@@ -185,8 +209,11 @@ export default function Start() {
                                         required
                                     >
                                         <option value="">Select Academic Year</option>
-                                        <option value="2025-2026">2025–2026</option>
-                                        <option value="2026-2027">2026–2027</option>
+                                        {academicYears.map((year) => (
+                                            <option key={year.id} value={year.name}>
+                                                {year.name}
+                                            </option>
+                                        ))}
                                     </select>
                                     {errors.academic_year && <p className="form-error">{errors.academic_year}</p>}
                                 </div>
@@ -203,8 +230,11 @@ export default function Start() {
                                         required
                                     >
                                         <option value="">Select Semester</option>
-                                        <option value="Semester I">Semester I</option>
-                                        <option value="Semester II">Semester II</option>
+                                        {semesters.map((semester) => (
+                                            <option key={semester.id} value={semester.name}>
+                                                {semester.name}
+                                            </option>
+                                        ))}
                                     </select>
                                     {errors.semester && <p className="form-error">{errors.semester}</p>}
                                 </div>

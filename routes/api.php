@@ -23,6 +23,10 @@ Route::get('/registry/checklist', [RegistryController::class, 'getChecklist']);
 // API routes for term management
 Route::get('/terms', [\App\Http\Controllers\AdminTermController::class, 'getTermsForApi']);
 
+// API routes for academic years and semesters
+Route::get('/academic-years', [\App\Http\Controllers\AdminRegistryManagementController::class, 'getAcademicYearsForApi']);
+Route::get('/semesters', [\App\Http\Controllers\AdminRegistryManagementController::class, 'getSemestersForApi']);
+
 // Admissions document upload and finalization (legacy API endpoints)
 Route::post('/admissions/upload', [AdmissionsController::class, 'uploadDocument']);
 Route::post('/admissions/finalize', [AdmissionsController::class, 'finalizeSubmission']);
