@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/inertia-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import AppLayout from '../../Layouts/AppLayout';
 import { useState } from 'react';
 import { 

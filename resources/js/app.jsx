@@ -1,7 +1,7 @@
 import '../css/app.css';
 
 import { createRoot } from 'react-dom/client';
-import { createInertiaApp } from '@inertiajs/inertia-react';
+import { createInertiaApp } from '@inertiajs/react';
 import { InertiaProgress } from '@inertiajs/progress';
 
 const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'COSTAATT Student Document Upload System';

@@ -144,6 +144,7 @@ Route::prefix('/admin/admissions')->name('admin.admissions.')->group(function ()
     Route::get('/download/{documentId}', [AdminAdmissionsController::class, 'download'])->name('download');
     Route::get('/export', [AdminAdmissionsController::class, 'exportCsv'])->name('export');
     Route::post('/update-status/{id}', [AdminAdmissionsController::class, 'updateStatus'])->name('update-status');
+    Route::delete('/delete/{id}', [AdminAdmissionsController::class, 'destroy'])->name('destroy');
 });
 
 // Admin Registry Routes
@@ -153,6 +154,7 @@ Route::prefix('/admin/registry')->name('admin.registry.')->group(function () {
     Route::get('/download/{documentId}', [AdminRegistryController::class, 'download'])->name('download');
     Route::get('/export', [AdminRegistryController::class, 'exportCsv'])->name('export');
     Route::post('/update-status/{id}', [AdminRegistryController::class, 'updateStatus'])->name('update-status');
+    Route::delete('/delete/{id}', [AdminRegistryController::class, 'destroy'])->name('destroy');
 });
 
 // Admin Term Management Routes

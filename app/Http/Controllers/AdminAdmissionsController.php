@@ -270,4 +270,41 @@ class AdminAdmissionsController extends Controller
             return redirect()->back()->with('error', 'Failed to update status: ' . $e->getMessage());
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            $submission = Submission::where('dept', 'ADMISSIONS')->findOrFail($id);
+
+            \Log::info('Deleting admissions submission', [
+                'submission_id' => $id,
+                'student_id' => $submission->student_id,
+                'student_name' => $submission->first_name . ' ' . $submission->last_name
+            ]);
+
+            // Delete associated documents from storage
+            foreach ($submission->documents as $document) {
+                $filePath = storage_path('app/public/' . $document->file_path);
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+            }
+
+            // Delete the submission (this will also delete associated documents due to cascade)
+            $submission->delete();
+
+            \Log::info('Admissions submission deleted successfully', [
+                'submission_id' => $id
+            ]);
+
+            return redirect()->route('admin.admissions.index')->with('success', 'Submission deleted successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Error deleting admissions submission', [
+                'submission_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return redirect()->back()->with('error', 'Failed to delete submission: ' . $e->getMessage());
+        }
+    }
 }

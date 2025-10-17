@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, router, useForm } from "@inertiajs/inertia-react";
+import { Link, router, useForm } from "@inertiajs/react";
 import AppLayout from "../../Layouts/AppLayout";
 import { 
     DocumentTextIcon, 

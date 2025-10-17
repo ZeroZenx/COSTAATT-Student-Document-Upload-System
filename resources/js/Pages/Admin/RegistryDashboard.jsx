@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/inertia-react';
+import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '../../Layouts/AppLayout';
 import { useState } from 'react';
 import { 
@@ -6,7 +6,8 @@ import {
     DocumentArrowDownIcon, 
     EyeIcon,
     FunnelIcon,
-    XMarkIcon 
+    XMarkIcon,
+    TrashIcon
 } from '@heroicons/react/24/outline';
 
 export default function RegistryDashboard({ submissions, filters, currentFilters }) {
@@ -58,6 +59,20 @@ export default function RegistryDashboard({ submissions, filters, currentFilters
 
     const getStatusDisplay = (status) => {
         return filters.statuses[status] || status;
+    };
+
+    const handleDelete = (submissionId, studentName) => {
+        if (confirm(`Are you sure you want to delete the submission for ${studentName}? This action cannot be undone.`)) {
+            router.delete(`/admin/registry/delete/${submissionId}`, {
+                onSuccess: () => {
+                    console.log('Submission deleted successfully');
+                },
+                onError: (errors) => {
+                    console.error('Error deleting submission:', errors);
+                    alert('Error deleting submission. Please try again.');
+                }
+            });
+        }
     };
 
     return (
@@ -288,13 +303,22 @@ export default function RegistryDashboard({ submissions, filters, currentFilters
                                                 {new Date(submission.created_at).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <Link
-                                                    href={`/admin/registry/view/${submission.id}`}
-                                                    className="text-secondary-600 hover:text-secondary-900 flex items-center gap-1"
-                                                >
-                                                    <EyeIcon className="h-4 w-4" />
-                                                    View
-                                                </Link>
+                                                <div className="flex items-center gap-3">
+                                                    <Link
+                                                        href={`/admin/registry/view/${submission.id}`}
+                                                        className="text-secondary-600 hover:text-secondary-900 flex items-center gap-1"
+                                                    >
+                                                        <EyeIcon className="h-4 w-4" />
+                                                        View
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleDelete(submission.id, `${submission.first_name} ${submission.last_name}`)}
+                                                        className="text-red-600 hover:text-red-900 flex items-center gap-1"
+                                                    >
+                                                        <TrashIcon className="h-4 w-4" />
+                                                        Delete
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

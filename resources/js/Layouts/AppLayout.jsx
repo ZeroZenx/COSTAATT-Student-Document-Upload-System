@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/inertia-react';
+import { Head } from '@inertiajs/react';
 import StudentServicesDigitalEmployee from '../Components/Chatbot/StudentServicesDigitalEmployee';
 
 export default function AppLayout({ children }) {

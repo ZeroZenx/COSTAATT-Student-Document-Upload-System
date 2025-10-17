@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/inertia-react';
+import { Link } from '@inertiajs/react';
 import AppLayout from '../Layouts/AppLayout';
 import { DocumentTextIcon, AcademicCapIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
