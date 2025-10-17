@@ -23,21 +23,30 @@ class ChatbotController extends Controller
             'student_id' => $studentId
         ]);
 
-        // --- 1️⃣ SMART STUDENT LOOKUP BY NAME OR ID ---
-        $studentInfo = $this->findStudentByMessage($userMessage, $studentId);
-        if ($studentInfo) {
-            return response()->json(['reply' => $this->formatStudentInfo($studentInfo)]);
+        // --- 1️⃣ SMART STUDENT LOOKUP BY NAME OR ID (only if explicitly asking for student info) ---
+        if ($this->isStudentLookupQuery($userMessage)) {
+            $studentInfo = $this->findStudentByMessage($userMessage, $studentId);
+            if ($studentInfo) {
+                return response()->json(['reply' => $this->formatStudentInfo($studentInfo)]);
+            } else {
+                return response()->json(['reply' => "I couldn't find any student with that information. Please check the name, Student ID, or reference number and try again."]);
+            }
         }
 
         // --- 2️⃣ CHECK UPLOAD OR SUBMISSION STATUS ---
         if ($this->isStatusQuery($userMessage)) {
-            if (!$studentId) {
-                return response()->json(['reply' => "Please provide your Student ID or name so I can check your upload status. You can enter your Student ID on the upload form page."]);
-            }
-
-            $submission = $this->getStudentSubmission($studentId);
+            // Try to find student info from the message first, then fall back to provided studentId
+            $submission = $this->findStudentByMessage($userMessage, $studentId);
+            
             if (!$submission) {
-                return response()->json(['reply' => "I couldn't find any record for Student ID {$studentId}. Please make sure it's correct or try uploading your documents again."]);
+                if (!$studentId) {
+                    return response()->json(['reply' => "Please provide your Student ID or name so I can check your upload status. You can enter your Student ID on the upload form page."]);
+                }
+                
+                $submission = $this->getStudentSubmission($studentId);
+                if (!$submission) {
+                    return response()->json(['reply' => "I couldn't find any record for Student ID {$studentId}. Please make sure it's correct or try uploading your documents again."]);
+                }
             }
 
             return response()->json(['reply' => $this->formatSubmissionStatus($submission)]);
@@ -166,6 +175,46 @@ Always encourage students to provide their Student ID for personalized assistanc
     }
 
     /**
+     * Check if message is asking for student lookup
+     */
+    private function isStudentLookupQuery($message)
+    {
+        $message = strtolower($message);
+        
+        // Check for explicit lookup keywords
+        $lookupKeywords = ['find', 'lookup', 'search for', 'show me', 'who is', 'student info', 'student information'];
+        foreach ($lookupKeywords as $keyword) {
+            if (str_contains($message, $keyword)) {
+                return true;
+            }
+        }
+        
+        // Check if message contains a student ID pattern
+        if (preg_match('/\b(\d{6,})\b/', $message)) {
+            return true;
+        }
+        
+        // Check if message contains a reference number pattern
+        if (preg_match('/\b(ADM|REG)\d+[A-Z]\d+\b/i', $message)) {
+            return true;
+        }
+        
+        // Check if message contains a name pattern (first name + last name) AND is asking for info
+        if (preg_match('/\b([a-z]+)\s+([a-z]+)\b/', $message)) {
+            // Only treat as lookup if it's not asking about something else
+            $nonLookupKeywords = ['what', 'how', 'when', 'where', 'why', 'documents', 'requirements', 'programme', 'program', 'help'];
+            foreach ($nonLookupKeywords as $keyword) {
+                if (str_contains($message, $keyword)) {
+                    return false; // This is asking about something else, not looking up a student
+                }
+            }
+            return true; // It's just a name without other context, treat as lookup
+        }
+        
+        return false;
+    }
+
+    /**
      * Check if message is asking about status
      */
     private function isStatusQuery($message)
@@ -236,6 +285,27 @@ Always encourage students to provide their Student ID for personalized assistanc
                 if (str_contains($message, $word) && strlen($word) > 3) { // Only match words longer than 3 characters
                     $matchCount++;
                 }
+            }
+            
+            // Special handling for common programme types
+            if (str_contains($message, 'nursing') && str_contains($programmeLower, 'nursing')) {
+                $matchedProgramme = $programme;
+                break;
+            }
+            
+            if (str_contains($message, 'medical') && str_contains($programmeLower, 'medical')) {
+                $matchedProgramme = $programme;
+                break;
+            }
+            
+            if (str_contains($message, 'social work') && str_contains($programmeLower, 'social work')) {
+                $matchedProgramme = $programme;
+                break;
+            }
+            
+            if (str_contains($message, 'early childhood') && str_contains($programmeLower, 'early childhood')) {
+                $matchedProgramme = $programme;
+                break;
             }
             
             // If we have at least 2 matching words or the message contains the full programme name
