@@ -1,0 +1,112 @@
+# Laravel
+/vendor/
+/node_modules/
+/public/hot
+/public/storage
+/storage/*.key
+/storage/app/public/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+/bootstrap/cache/*
+
+# Environment files
+.env
+.env.backup
+.env.production
+.env.local
+.env.development
+.env.testing
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# Build outputs
+/public/build/
+/public/js/
+/public/css/
+/public/mix-manifest.json
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Windows specific
+*.bat
+*.cmd
+*.exe
+nssm.exe
+
+# COSTAATT specific exclusions
+exclude-list.txt
+production-config-template.txt
+COSTAATT_EXPORT_SUMMARY.yaml
+
+# Documentation that might contain sensitive info
+*_MANUAL.md
+*_GUIDE.md
+*_INSTRUCTIONS.md
+DEPLOYMENT_*.md
+TECHNICAL_MANUAL.md
+ADMIN_*.md
+STUDENT_MANUAL.md
+SSL_SETUP_GUIDE.md
+WINDOWS_REPLICATION_GUIDE.md
+NETWORK-SETUP.md
+DNS-SETUP-INSTRUCTIONS.md
+QUICK_DEPLOYMENT_GUIDE.md
+README-SERVICE.md
+SETUP_INSTRUCTIONS.md
+
