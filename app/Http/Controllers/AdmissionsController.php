@@ -52,7 +52,6 @@ class AdmissionsController extends Controller
             'last_name' => 'required|string|max:255',
             'dob' => 'required|date|before:today',
             'programme' => 'required|string|max:255',
-            'post_compass_programme' => 'required_if:programme,COMPASS|nullable|string|max:255',
             'intake_term' => 'required|string|max:255',
             'campus' => 'required|string|max:255',
             'nationality' => 'required|string|max:255',
@@ -189,7 +188,6 @@ class AdmissionsController extends Controller
     public function getProgrammes()
     {
         return [
-            'COMPASS',
             'Early Childhood Care and Education (BA)',
             'Medical Laboratory Technology (AAS, BSc)',
             'Medical Ultrasound (AdvDip)',

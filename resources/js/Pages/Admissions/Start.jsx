@@ -12,54 +12,6 @@ export default function Start() {
     const [showChecklist, setShowChecklist] = useState(false);
     const [selectedProgramme, setSelectedProgramme] = useState('');
     
-    // Post-COMPASS programmes list
-    const postCompassProgrammes = [
-        'AAS General Nursing',
-        'AAS Psychiatric Nursing',
-        'AAS Medical Laboratory Technology',
-        'AAS Occupational Safety and Health',
-        'AAS Environmental Health',
-        'AS Biology',
-        'AAS Business Administration',
-        'AS Management Studies for the Protective Services',
-        'AAS Information Technology',
-        'AAS Library and Information Studies',
-        'AA Literatures in English',
-        'AA Film and Video Production',
-        'AA Performing Arts: Music',
-        'AAS Graphic Design (on hold, advertising BA)',
-        'AAS Advertising and Promotions',
-        'AA Journalism',
-        'AAS Journalism and Public Relations',
-        'AA Spanish',
-        'AAS Spanish for Business',
-        'AAS in Criminal Justice',
-        'AA Psychology',
-        'AAS Social Work',
-        'AS Mathematics',
-        'AAS CAT Reporting',
-        'AAS in IT – Webpage Development',
-        'BSc General Nursing',
-        'BSc Psychiatric Nursing',
-        'BSc Medical Laboratory Technology',
-        'BSc Radiography',
-        'BSc Occupational Safety and Health',
-        'BSc Environmental Health',
-        'BA Accounting',
-        'BBA Management and Entrepreneurship',
-        'BBA Human Resource Management',
-        'BBA Marketing',
-        'BSc Information Technology',
-        'BSc Networking',
-        'BSc Library and Information Science',
-        'BA Mass Communication',
-        'BA Graphic Design',
-        'BA Criminal Justice',
-        'BSc Psychology',
-        'BSW Social Work',
-        'BA in Early Childhood Care and Education',
-        'BASC in IT – Webpage Development'
-    ];
     
     // Required documents mapping
     const getRequiredDocs = (programme, nationality) => {
@@ -108,7 +60,6 @@ export default function Start() {
         last_name: '',
         dob: '',
         programme: '',
-        post_compass_programme: '',
         intake_term: '',
         campus: '',
         nationality: '',
@@ -119,7 +70,6 @@ export default function Start() {
         // Use hardcoded data for now
         console.log('Loading programmes with hardcoded data...');
         const programmesList = [
-            'COMPASS',
             'Early Childhood Care and Education (BA)',
             'Medical Laboratory Technology (AAS, BSc)',
             'Medical Ultrasound (AdvDip)',
@@ -162,14 +112,32 @@ export default function Start() {
 
         try {
             console.log('Loading checklist for:', data.programme, data.nationality);
-            // Use the new function to get required documents based on nationality
-            let requiredDocs = getRequiredDocs(data.programme, data.nationality);
-            let optionalDocs = [];
+            
+            // Use the actual API to get documents
+            const nationality = encodeURIComponent(data.nationality || '');
+            const url = `/api-checklist/ADMISSIONS/${encodeURIComponent(data.programme)}/${encodeURIComponent(data.intake_term)}/${encodeURIComponent(data.campus)}/${data.funding_type}/${nationality}`;
+            console.log('Loading checklist from URL:', url);
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const apiData = await response.json();
+            console.log('API checklist data received:', apiData);
+            
+            // Separate required and optional documents
+            const requiredDocs = apiData.filter(doc => doc.required).map(doc => doc.display_name);
+            const optionalDocs = apiData.filter(doc => !doc.required).map(doc => doc.display_name);
 
             setChecklist({ required: requiredDocs, optional: optionalDocs });
             setShowChecklist(true);
         } catch (error) {
             console.error('Error loading checklist:', error);
+            // Fallback to hardcoded data if API fails
+            let requiredDocs = getRequiredDocs(data.programme, data.nationality);
+            let optionalDocs = [];
+            setChecklist({ required: requiredDocs, optional: optionalDocs });
+            setShowChecklist(true);
         }
     };
 
@@ -376,13 +344,13 @@ export default function Start() {
                                     {errors.programme && <p className="form-error">{errors.programme}</p>}
                                     
                                     {/* Dynamic Required Documents List */}
-                                    {selectedProgramme && getRequiredDocs(selectedProgramme, data.nationality).length > 0 && (
+                                    {selectedProgramme && checklist.required && checklist.required.length > 0 && (
                                         <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                             <h4 className="text-sm font-semibold text-blue-800 mb-2">
                                                 📋 Required Documents for {selectedProgramme}:
                                             </h4>
                                             <ul className="text-sm text-blue-700 space-y-1">
-                                                {getRequiredDocs(selectedProgramme, data.nationality).map((doc, i) => (
+                                                {checklist.required.map((doc, i) => (
                                                     <li key={i} className="flex items-center">
                                                         <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                                                         {doc}
@@ -392,29 +360,6 @@ export default function Start() {
                                         </div>
                                     )}
                                     
-                                    {/* Post-COMPASS Programme Selection - Only show when COMPASS is selected */}
-                                    {data.programme === 'COMPASS' && (
-                                        <div className="mt-4">
-                                            <label htmlFor="post_compass_programme" className="form-label">
-                                                Intended Post-COMPASS Programme *
-                                            </label>
-                                            <select
-                                                id="post_compass_programme"
-                                                value={data.post_compass_programme}
-                                                onChange={(e) => setData('post_compass_programme', e.target.value)}
-                                                className="form-input"
-                                                required
-                                            >
-                                                <option value="">Select intended programme</option>
-                                                {postCompassProgrammes.map((programme) => (
-                                                    <option key={programme} value={programme}>
-                                                        {programme}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {errors.post_compass_programme && <p className="form-error">{errors.post_compass_programme}</p>}
-                                        </div>
-                                    )}
                                 </div>
 
                                 <div>
