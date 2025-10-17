@@ -7,7 +7,7 @@ export default function StudentServicesDigitalEmployee() {
     const [messages, setMessages] = useState([
         { 
             role: 'assistant', 
-            content: "Hi there! 👋 I'm the Student Services Digital Employee. I can help you with uploading your documents, understanding programme requirements, or checking the status of your submissions." 
+            content: "Hi there! 👋 I'm the Student Services Digital Employee. I can help you with:\n\n• Finding student information by name or ID\n• Document requirements for programmes\n• Checking submission status\n• Programme information\n\nJust ask me anything or try the quick actions below!" 
         }
     ]);
     const [input, setInput] = useState('');
@@ -32,29 +32,19 @@ export default function StudentServicesDigitalEmployee() {
         setIsLoading(true);
 
         try {
-            // Check if input looks like a student ID or reference number
-            const isStudentId = /^\d+$/.test(userInput);
-            const isReferenceNumber = /^(ADM|REG)\d+[A-Z]\d+$/.test(userInput);
+            // Get student ID from localStorage if available
+            const studentId = localStorage.getItem('student_id');
             
-            if (isStudentId || isReferenceNumber) {
-                // Search for submission status
-                const searchParam = isStudentId ? 'student_id' : 'reference';
-                const res = await axios.get(`/api/chatbot/search?${searchParam}=${encodeURIComponent(userInput)}`);
-                
-                if (res.data.submission) {
-                    const statusMessage = getStatusMessage(res.data.submission);
-                    setMessages(prev => [...prev, { role: 'assistant', content: statusMessage }]);
-                } else {
-                    setMessages(prev => [...prev, { 
-                        role: 'assistant', 
-                        content: "No submission found with that Student ID or Reference Number. Please check your information and try again." 
-                    }]);
-                }
-            } else {
-                // Handle general questions
-                const reply = getGeneralResponse(userInput);
-                setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-            }
+            // Send to smart chatbot backend
+            const response = await axios.post('/api/chatbot/student', {
+                message: userInput,
+                student_id: studentId
+            });
+            
+            setMessages(prev => [...prev, { 
+                role: 'assistant', 
+                content: response.data.reply 
+            }]);
         } catch (error) {
             console.error('Chatbot error:', error);
             setMessages(prev => [...prev, { 
@@ -73,114 +63,6 @@ export default function StudentServicesDigitalEmployee() {
         }
     };
 
-    const getStatusMessage = (submission) => {
-        const statusMessages = {
-            'IN_PROGRESS': 'Your submission is currently in progress. You can still upload additional documents.',
-            'SUBMITTED': 'Your submission has been received and is being reviewed by our team.',
-            'PROCESSING': 'Your submission is being processed. We will notify you once it\'s complete.',
-            'COMPLETED': 'Your submission has been completed successfully! You will receive further instructions via email.'
-        };
-
-        const statusDisplay = {
-            'IN_PROGRESS': 'In Progress',
-            'SUBMITTED': 'Submitted',
-            'PROCESSING': 'Processing',
-            'COMPLETED': 'Completed'
-        };
-
-        const department = submission.dept === 'ADMISSIONS' ? 'Admissions' : 'Registry';
-        const documentsCount = submission.documents_count || 0;
-        const submissionDate = new Date(submission.created_at).toLocaleDateString();
-
-        return `📋 **Submission Status Update**
-
-**Student:** ${submission.first_name} ${submission.last_name}
-**Department:** ${department}
-**Status:** ${statusDisplay[submission.status]}
-**Reference:** ${submission.reference}
-**Documents Uploaded:** ${documentsCount}
-**Submitted:** ${submissionDate}
-
-${statusMessages[submission.status]}
-
-${submission.status === 'IN_PROGRESS' ? '💡 You can continue uploading documents until your submission is complete.' : ''}
-${submission.status === 'COMPLETED' ? '✅ Congratulations! Your submission has been processed successfully.' : ''}
-
-Need more help? Contact us at ${submission.dept === 'ADMISSIONS' ? 'admissions@costaatt.edu.tt' : 'registry@costaatt.edu.tt'}`;
-    };
-
-    const getGeneralResponse = (input) => {
-        const lowerInput = input.toLowerCase();
-        
-        if (lowerInput.includes('document') && lowerInput.includes('requirement')) {
-            return `📄 **Document Requirements**
-
-For **Admissions**, you typically need:
-• Birth Certificate
-• Academic Transcripts
-• National ID Card
-• Passport Photo
-• Character Reference
-• Medical Certificate
-• GATE Approval Letter (if applicable)
-
-For **Registry**, you typically need:
-• Official Offer Letter
-• Signed Acceptance Form
-• Medical Form
-• Student Photo
-• GATE Approval or Payment Proof
-
-All documents must be in PDF format and under 10MB each.`;
-        }
-        
-        if (lowerInput.includes('status') || lowerInput.includes('check')) {
-            return `🔍 **Check Your Status**
-
-To check your submission status, please provide:
-• Your Student ID (numbers only, e.g., 123456)
-• Your Reference Number (e.g., ADM123456A789 or REG123456A789)
-
-I'll give you a detailed update on your submission!`;
-        }
-        
-        if (lowerInput.includes('programme') || lowerInput.includes('program')) {
-            return `🎓 **Available Programmes**
-
-We offer various programmes including:
-• Early Childhood Care and Education (BA)
-• Medical Laboratory Technology (AAS, BSc)
-• Medical Ultrasound (AdvDip)
-• Radiography (BSc)
-• Environmental Health (AAS, BSc)
-• Occupational Safety and Health (AAS, BSc)
-• Social Work (BSW)
-• General Nursing (AAS, BSc)
-• Psychiatric Nursing (AAS, BSc)
-
-For more details, visit our website or contact admissions@costaatt.edu.tt`;
-        }
-        
-        if (lowerInput.includes('help') || lowerInput.includes('support')) {
-            return `🆘 **How Can I Help?**
-
-I can assist you with:
-• Checking your submission status
-• Document requirements
-• Programme information
-• General questions about the upload process
-
-Just ask me anything or provide your Student ID/Reference Number for status updates!`;
-        }
-        
-        return `I'm here to help! I can assist you with:
-• Checking your submission status (provide Student ID or Reference Number)
-• Document requirements
-• Programme information
-• General questions
-
-What would you like to know?`;
-    };
 
     const formatMessage = (content) => {
         // Simple formatting for line breaks and lists
@@ -272,7 +154,7 @@ What would you like to know?`;
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyPress={handleKeyPress}
                                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="Ask me anything about your documents..."
+                                placeholder="Ask me anything or search for a student..."
                                 disabled={isLoading}
                             />
                             <button
@@ -287,7 +169,13 @@ What would you like to know?`;
                         {/* Quick Actions */}
                         <div className="mt-2 flex flex-wrap gap-1">
                             <button
-                                onClick={() => setInput("What documents do I need to upload?")}
+                                onClick={() => setInput("Find John Smith")}
+                                className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors"
+                            >
+                                👤 Find Student
+                            </button>
+                            <button
+                                onClick={() => setInput("What documents do I need for Nursing?")}
                                 className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors"
                             >
                                 📄 Requirements

@@ -92,13 +92,14 @@ Route::get('/api-registry-checklist', function () {
         });
 });
 
-// Chatbot API routes
+// Enhanced Chatbot API routes
 Route::get('/api/chatbot/search', function (Request $request) {
     $studentId = $request->get('student_id');
     $reference = $request->get('reference');
+    $name = $request->get('name');
     
-    if (!$studentId && !$reference) {
-        return response()->json(['error' => 'Student ID or Reference Number required'], 400);
+    if (!$studentId && !$reference && !$name) {
+        return response()->json(['error' => 'Student ID, Reference Number, or Name required'], 400);
     }
     
     $query = \App\Models\Submission::withCount('documents');
@@ -107,6 +108,19 @@ Route::get('/api/chatbot/search', function (Request $request) {
         $query->where('student_id', $studentId);
     } elseif ($reference) {
         $query->where('reference', $reference);
+    } elseif ($name) {
+        // Split name into first and last name
+        $nameParts = explode(' ', trim($name), 2);
+        if (count($nameParts) >= 2) {
+            $query->where('first_name', 'LIKE', "%{$nameParts[0]}%")
+                  ->where('last_name', 'LIKE', "%{$nameParts[1]}%");
+        } else {
+            // Search in both first and last name if only one name provided
+            $query->where(function($q) use ($name) {
+                $q->where('first_name', 'LIKE', "%{$name}%")
+                  ->orWhere('last_name', 'LIKE', "%{$name}%");
+            });
+        }
     }
     
     $submission = $query->first();
