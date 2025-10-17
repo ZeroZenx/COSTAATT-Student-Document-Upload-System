@@ -27,6 +27,10 @@ Route::get('/terms', [\App\Http\Controllers\AdminTermController::class, 'getTerm
 Route::get('/academic-years', [\App\Http\Controllers\AdminRegistryManagementController::class, 'getAcademicYearsForApi']);
 Route::get('/semesters', [\App\Http\Controllers\AdminRegistryManagementController::class, 'getSemestersForApi']);
 
+// Upload failure notification endpoints
+Route::post('/admissions/upload-failure-notification', [\App\Http\Controllers\AdmissionsController::class, 'sendUploadFailureNotification']);
+Route::post('/registry/upload-failure-notification', [\App\Http\Controllers\RegistryController::class, 'sendUploadFailureNotification']);
+
 // Admissions document upload and finalization (legacy API endpoints)
 Route::post('/admissions/upload', [AdmissionsController::class, 'uploadDocument']);
 Route::post('/admissions/finalize', [AdmissionsController::class, 'finalizeSubmission']);

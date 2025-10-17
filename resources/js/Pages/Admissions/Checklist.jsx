@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
 import AppLayout from '../../Layouts/AppLayout';
-import { CheckCircleIcon, AcademicCapIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, AcademicCapIcon, ExclamationTriangleIcon, ArrowPathIcon, XCircleIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 
 export default function Checklist({ submission }) {
     const [checklist, setChecklist] = useState([]);
     const [uploading, setUploading] = useState({});
     const [loading, setLoading] = useState(true);
+    const [uploadErrors, setUploadErrors] = useState({});
+    const [uploadProgress, setUploadProgress] = useState({});
+    const [retryAttempts, setRetryAttempts] = useState({});
 
     const { post, processing } = useForm();
 
@@ -39,27 +42,55 @@ export default function Checklist({ submission }) {
         }
     };
 
-    const handleFileUpload = async (docType, file) => {
+    const handleFileUpload = async (docType, file, isRetry = false) => {
         if (!file) return;
 
-        // Validate file type
+        // Clear any previous errors
+        setUploadErrors(prev => ({ ...prev, [docType]: null }));
+        setUploadProgress(prev => ({ ...prev, [docType]: 0 }));
+
+        // Enhanced file validation with specific error messages
         if (file.type !== 'application/pdf') {
-            alert('Please upload only PDF files.');
+            const errorMsg = `❌ Invalid file type. Please upload only PDF files.\n\nSelected file: ${file.name}\nFile type: ${file.type}`;
+            setUploadErrors(prev => ({ ...prev, [docType]: errorMsg }));
             return;
         }
 
-        // Validate file size (10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            alert('File size must be less than 10MB.');
+        // Enhanced file size validation
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            const errorMsg = `❌ File too large. Maximum size is 10MB.\n\nSelected file: ${file.name}\nFile size: ${fileSizeMB}MB\nMaximum allowed: 10MB`;
+            setUploadErrors(prev => ({ ...prev, [docType]: errorMsg }));
+            return;
+        }
+
+        // Check retry attempts
+        const currentAttempts = retryAttempts[docType] || 0;
+        if (isRetry && currentAttempts >= 3) {
+            const errorMsg = `❌ Maximum retry attempts reached (3). Please contact support if the problem persists.\n\nDocument: ${docType}\nAttempts: ${currentAttempts}`;
+            setUploadErrors(prev => ({ ...prev, [docType]: errorMsg }));
             return;
         }
 
         setUploading(prev => ({ ...prev, [docType]: true }));
+        setUploadProgress(prev => ({ ...prev, [docType]: 10 }));
 
         const formData = new FormData();
         formData.append('document', file);
 
         try {
+            // Simulate progress
+            const progressInterval = setInterval(() => {
+                setUploadProgress(prev => {
+                    const current = prev[docType] || 0;
+                    if (current < 90) {
+                        return { ...prev, [docType]: current + 10 };
+                    }
+                    return prev;
+                });
+            }, 200);
+
             const response = await fetch(`/student-docs/admissions/document/${submission.id}/${docType}/upload`, {
                 method: 'POST',
                 body: formData,
@@ -68,21 +99,137 @@ export default function Checklist({ submission }) {
                 },
             });
 
+            clearInterval(progressInterval);
+            setUploadProgress(prev => ({ ...prev, [docType]: 100 }));
+
             if (response.ok) {
-                // Show success message
-                alert('✅ Document uploaded successfully! A confirmation email has been sent to your registered email address.');
+                // Success - clear errors and reset retry attempts
+                setUploadErrors(prev => ({ ...prev, [docType]: null }));
+                setRetryAttempts(prev => ({ ...prev, [docType]: 0 }));
+                
+                // Show enhanced success message
+                const successMsg = `✅ Document uploaded successfully!\n\n📧 A confirmation email has been sent to: ${submission.email}\n📄 Document: ${file.name}\n💾 File size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`;
+                alert(successMsg);
+                
                 // Reload the submission to get updated documents
-                window.location.reload();
+                setTimeout(() => window.location.reload(), 1000);
             } else {
-                const errorText = await response.text();
-                alert(`❌ Upload failed: ${errorText || 'Please try again.'}`);
+                // Handle different types of errors
+                let errorMessage = 'Unknown error occurred';
+                let errorDetails = '';
+                
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorData.error || 'Upload failed';
+                    errorDetails = errorData.details ? `\n\nDetails: ${errorData.details}` : '';
+                } catch {
+                    const errorText = await response.text();
+                    errorMessage = errorText || 'Upload failed';
+                }
+
+                // Categorize errors for better user guidance
+                let userFriendlyMessage = '';
+                if (response.status === 413) {
+                    userFriendlyMessage = `❌ File too large\n\n${errorMessage}${errorDetails}\n\n💡 Try compressing your PDF or splitting it into smaller files.`;
+                } else if (response.status === 415) {
+                    userFriendlyMessage = `❌ Invalid file format\n\n${errorMessage}${errorDetails}\n\n💡 Please ensure your file is a valid PDF document.`;
+                } else if (response.status === 422) {
+                    userFriendlyMessage = `❌ Validation error\n\n${errorMessage}${errorDetails}\n\n💡 Please check your file and try again.`;
+                } else if (response.status >= 500) {
+                    userFriendlyMessage = `❌ Server error\n\n${errorMessage}${errorDetails}\n\n💡 This is a temporary issue. Please try again in a few minutes.`;
+                } else {
+                    userFriendlyMessage = `❌ Upload failed\n\n${errorMessage}${errorDetails}\n\n💡 Please try again or contact support if the problem persists.`;
+                }
+
+                setUploadErrors(prev => ({ ...prev, [docType]: userFriendlyMessage }));
+                
+                // Increment retry attempts
+                const newAttempts = (retryAttempts[docType] || 0) + 1;
+                setRetryAttempts(prev => ({ 
+                    ...prev, 
+                    [docType]: newAttempts 
+                }));
+
+                // Send email notification for upload failure
+                try {
+                    await fetch('/api/admissions/upload-failure-notification', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        },
+                        body: JSON.stringify({
+                            student_id: submission.student_id,
+                            email: submission.email,
+                            programme: submission.programme,
+                            doc_type: docType,
+                            student_name: `${submission.first_name} ${submission.last_name}`,
+                            error_message: userFriendlyMessage,
+                            attempts: newAttempts
+                        })
+                    });
+                } catch (emailError) {
+                    console.error('Failed to send upload failure notification:', emailError);
+                }
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Upload failed. Please try again.');
+            
+            // Categorize network errors
+            let errorMessage = '';
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = `❌ Network connection error\n\nUnable to connect to the server.\n\n💡 Please check your internet connection and try again.\n\nIf the problem persists, the server might be temporarily unavailable.`;
+            } else if (error.name === 'AbortError') {
+                errorMessage = `❌ Upload cancelled\n\nThe upload was cancelled.\n\n💡 Please try uploading again.`;
+            } else {
+                errorMessage = `❌ Upload failed\n\n${error.message}\n\n💡 Please try again or contact support if the problem persists.`;
+            }
+
+            setUploadErrors(prev => ({ ...prev, [docType]: errorMessage }));
+            
+            // Increment retry attempts
+            const newAttempts = (retryAttempts[docType] || 0) + 1;
+            setRetryAttempts(prev => ({ 
+                ...prev, 
+                [docType]: newAttempts 
+            }));
+
+            // Send email notification for upload failure
+            try {
+                await fetch('/api/admissions/upload-failure-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    },
+                    body: JSON.stringify({
+                        student_id: submission.student_id,
+                        email: submission.email,
+                        programme: submission.programme,
+                        doc_type: docType,
+                        student_name: `${submission.first_name} ${submission.last_name}`,
+                        error_message: errorMessage,
+                        attempts: newAttempts
+                    })
+                });
+            } catch (emailError) {
+                console.error('Failed to send upload failure notification:', emailError);
+            }
         } finally {
             setUploading(prev => ({ ...prev, [docType]: false }));
+            setUploadProgress(prev => ({ ...prev, [docType]: 0 }));
         }
+    };
+
+    const handleRetryUpload = (docType) => {
+        const fileInput = document.getElementById(`file-${docType}`);
+        if (fileInput && fileInput.files.length > 0) {
+            handleFileUpload(docType, fileInput.files[0], true);
+        }
+    };
+
+    const clearError = (docType) => {
+        setUploadErrors(prev => ({ ...prev, [docType]: null }));
     };
 
     const handleSubmit = () => {
@@ -241,9 +388,12 @@ export default function Checklist({ submission }) {
                                     checklist.map((doc) => {
                                     const status = getDocumentStatus(doc.doc_type);
                                     const isUploading = uploading[doc.doc_type];
+                                    const error = uploadErrors[doc.doc_type];
+                                    const progress = uploadProgress[doc.doc_type] || 0;
+                                    const attempts = retryAttempts[doc.doc_type] || 0;
 
                                     return (
-                                        <div key={doc.doc_type} className="border rounded-lg p-4">
+                                        <div key={doc.doc_type} className={`border rounded-lg p-4 ${error ? 'border-red-300 bg-red-50' : ''}`}>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-3">
                                                     {status === 'uploaded' ? (
@@ -254,7 +404,7 @@ export default function Checklist({ submission }) {
                                                         <div className="h-6 w-6 rounded-full border-2 border-gray-300"></div>
                                                     )}
                                                     
-                                                    <div>
+                                                    <div className="flex-1">
                                                         <h4 className="font-medium text-gray-900">
                                                             {doc.display_name}
                                                             {doc.required && <span className="text-red-600 ml-1">*</span>}
@@ -263,6 +413,45 @@ export default function Checklist({ submission }) {
                                                             {status === 'uploaded' ? 'Document uploaded' : 
                                                              doc.required ? 'Required document' : 'Optional document'}
                                                         </p>
+                                                        
+                                                        {/* Progress Bar */}
+                                                        {isUploading && (
+                                                            <div className="mt-2">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <CloudArrowUpIcon className="h-4 w-4 text-blue-500 animate-bounce" />
+                                                                    <span className="text-sm text-blue-600">Uploading... {progress}%</span>
+                                                                </div>
+                                                                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                                                    <div 
+                                                                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                                                        style={{ width: `${progress}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Error Display */}
+                                                        {error && (
+                                                            <div className="mt-2 p-3 bg-red-100 border border-red-300 rounded-lg">
+                                                                <div className="flex items-start space-x-2">
+                                                                    <XCircleIcon className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                                                                    <div className="flex-1">
+                                                                        <pre className="text-sm text-red-700 whitespace-pre-wrap font-sans">{error}</pre>
+                                                                        {attempts > 0 && (
+                                                                            <p className="text-xs text-red-600 mt-1">
+                                                                                Attempts: {attempts}/3
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={() => clearError(doc.doc_type)}
+                                                                        className="text-red-500 hover:text-red-700 text-sm"
+                                                                    >
+                                                                        ✕
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -287,13 +476,27 @@ export default function Checklist({ submission }) {
                                                         id={`file-${doc.doc_type}`}
                                                     />
                                                     
-                                                    <label
-                                                        htmlFor={`file-${doc.doc_type}`}
-                                                        className={`btn ${status === 'uploaded' ? 'btn-outline' : 'btn-primary'} ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                                    >
-                                                        {isUploading ? 'Uploading...' : 
-                                                         status === 'uploaded' ? 'Replace' : 'Upload'}
-                                                    </label>
+                                                    <div className="flex space-x-2">
+                                                        <label
+                                                            htmlFor={`file-${doc.doc_type}`}
+                                                            className={`btn ${status === 'uploaded' ? 'btn-outline' : 'btn-primary'} ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                        >
+                                                            {isUploading ? 'Uploading...' : 
+                                                             status === 'uploaded' ? 'Replace' : 'Upload'}
+                                                        </label>
+                                                        
+                                                        {/* Retry Button */}
+                                                        {error && attempts < 3 && (
+                                                            <button
+                                                                onClick={() => handleRetryUpload(doc.doc_type)}
+                                                                disabled={isUploading}
+                                                                className="btn btn-outline text-orange-600 border-orange-300 hover:bg-orange-50 flex items-center space-x-1"
+                                                            >
+                                                                <ArrowPathIcon className="h-4 w-4" />
+                                                                <span>Retry</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

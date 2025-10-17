@@ -234,4 +234,55 @@ class RegistryController extends Controller
             }
         }
     }
+
+    /**
+     * Send upload failure notification email (API endpoint)
+     */
+    public function sendUploadFailureNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'student_id' => 'required|string',
+                'email' => 'required|email',
+                'programme' => 'required|string',
+                'doc_type' => 'required|string',
+                'student_name' => 'required|string',
+                'error_message' => 'required|string',
+                'attempts' => 'required|integer|min:1|max:3'
+            ]);
+
+            $mailService = app(\App\Services\GraphMailService::class);
+            $success = $mailService->sendUploadFailureNotification(
+                $validated['email'],
+                $validated['student_id'],
+                $validated['programme'],
+                $validated['doc_type'],
+                $validated['student_name'],
+                $validated['error_message'],
+                $validated['attempts']
+            );
+
+            if ($success) {
+                Log::info('Registry upload failure notification sent successfully', [
+                    'student_id' => $validated['student_id'],
+                    'doc_type' => $validated['doc_type'],
+                    'attempts' => $validated['attempts']
+                ]);
+                return response()->json(['success' => true, 'message' => 'Notification sent successfully']);
+            } else {
+                Log::warning('Failed to send Registry upload failure notification', [
+                    'student_id' => $validated['student_id'],
+                    'doc_type' => $validated['doc_type'],
+                    'attempts' => $validated['attempts']
+                ]);
+                return response()->json(['success' => false, 'message' => 'Failed to send notification'], 500);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Registry upload failure notification error: ' . $e->getMessage(), [
+                'request_data' => $request->all()
+            ]);
+            return response()->json(['success' => false, 'message' => 'Internal server error'], 500);
+        }
+    }
 }
