@@ -46,7 +46,7 @@ class Document extends Model
         return match ($this->doc_type) {
             'birth_certificate' => 'Birth Certificate',
             'national_id' => 'National ID Card',
-            'passport_photo' => 'Passport Photo',
+            'passport_photo' => 'Passport Biodata page',
             'academic_transcripts' => 'Academic Transcripts',
             'character_reference' => 'Character Reference',
             'medical_certificate' => 'Medical Certificate',

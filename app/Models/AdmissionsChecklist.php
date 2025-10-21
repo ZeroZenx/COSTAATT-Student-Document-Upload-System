@@ -29,7 +29,7 @@ class AdmissionsChecklist extends Model
         'birth_certificate' => 'Birth Certificate',
         'national_id' => 'National ID Card',
         'passport' => 'Passport',
-        'passport_photo' => 'Passport Photo',
+        'passport_photo' => 'Passport Biodata page',
         'academic_transcripts' => 'Academic Transcripts',
         'character_reference' => 'Character Reference',
         'medical_certificate' => 'Medical Certificate',
