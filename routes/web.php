@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminRegistryController;
 use App\Http\Controllers\AdminRegistryManagementController;
 use App\Http\Controllers\AdminRegistryReportController;
 use App\Http\Controllers\AdminTermController;
+use App\Http\Controllers\AdminProgrammeController;
 use App\Http\Controllers\AdmissionsController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\RegistryController;
@@ -160,6 +161,21 @@ Route::prefix('/admin/admissions')->name('admin.admissions.')->group(function ()
     Route::get('/export', [AdminAdmissionsController::class, 'exportCsv'])->name('export');
     Route::post('/update-status/{id}', [AdminAdmissionsController::class, 'updateStatus'])->name('update-status');
     Route::delete('/delete/{id}', [AdminAdmissionsController::class, 'destroy'])->name('destroy');
+});
+
+// Admin Programme Management Routes
+Route::prefix('/admin/programmes')->name('admin.programmes.')->group(function () {
+    Route::get('/', [AdminProgrammeController::class, 'index'])->name('index');
+    Route::post('/', [AdminProgrammeController::class, 'store'])->name('store');
+    Route::put('/{programme}', [AdminProgrammeController::class, 'update'])->name('update');
+    Route::delete('/{programme}', [AdminProgrammeController::class, 'destroy'])->name('destroy');
+    Route::post('/{programme}/toggle-active', [AdminProgrammeController::class, 'toggleActive'])->name('toggle-active');
+    
+    // Document management for programmes
+    Route::get('/{programme}/documents', [AdminProgrammeController::class, 'getDocuments'])->name('documents');
+    Route::post('/{programme}/documents', [AdminProgrammeController::class, 'addDocument'])->name('add-document');
+    Route::put('/{programme}/documents/{document}', [AdminProgrammeController::class, 'updateDocument'])->name('update-document');
+    Route::delete('/{programme}/documents/{document}', [AdminProgrammeController::class, 'removeDocument'])->name('remove-document');
 });
 
 // Admin Registry Routes

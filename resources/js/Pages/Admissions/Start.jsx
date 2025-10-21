@@ -67,21 +67,45 @@ export default function Start() {
     });
 
     const loadProgrammes = async () => {
-        // Use hardcoded data for now
-        console.log('Loading programmes with hardcoded data...');
-        const programmesList = [
-            'Early Childhood Care and Education (BA)',
-            'Medical Laboratory Technology (AAS, BSc)',
-            'Medical Ultrasound (AdvDip)',
-            'Radiography (BSc)',
-            'Environmental Health (AAS, BSc)',
-            'Occupational Safety and Health (AAS, BSc)',
-            'Social Work (BSW)',
-            'General Nursing (AAS, BSc)',
-            'Psychiatric Nursing (AAS, BSc)',
-        ];
-        console.log('Programmes list:', programmesList);
-        setProgrammes(programmesList);
+        try {
+            console.log('Loading programmes from API...');
+            const response = await fetch('/api/programmes');
+            if (response.ok) {
+                const programmesList = await response.json();
+                console.log('Programmes list from API:', programmesList);
+                setProgrammes(programmesList);
+            } else {
+                console.error('Failed to load programmes from API');
+                // Fallback to hardcoded data
+                const fallbackList = [
+                    'Early Childhood Care and Education (BA)',
+                    'Medical Laboratory Technology (AAS, BSc)',
+                    'Medical Ultrasound (AdvDip)',
+                    'Radiography (BSc)',
+                    'Environmental Health (AAS, BSc)',
+                    'Occupational Safety and Health (AAS, BSc)',
+                    'Social Work (BSW)',
+                    'General Nursing (AAS, BSc)',
+                    'Psychiatric Nursing (AAS, BSc)',
+                ];
+                setProgrammes(fallbackList);
+            }
+        } catch (error) {
+            console.error('Error loading programmes:', error);
+            // Fallback to hardcoded data
+            const fallbackList = [
+                'Early Childhood Care and Education (BA)',
+                'Medical Laboratory Technology (AAS, BSc)',
+                'Medical Ultrasound (AdvDip)',
+                'Radiography (BSc)',
+                'Environmental Health (AAS, BSc)',
+                'Occupational Safety and Health (AAS, BSc)',
+                'Social Work (BSW)',
+                'General Nursing (AAS, BSc)',
+                'Psychiatric Nursing (AAS, BSc)',
+            ];
+            setProgrammes(fallbackList);
+        }
     };
 
     const loadIntakeTerms = async () => {

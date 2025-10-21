@@ -187,17 +187,29 @@ class AdmissionsController extends Controller
     // API endpoints
     public function getProgrammes()
     {
-        return [
-            'Early Childhood Care and Education (BA)',
-            'Medical Laboratory Technology (AAS, BSc)',
-            'Medical Ultrasound (AdvDip)',
-            'Radiography (BSc)',
-            'Environmental Health (AAS, BSc)',
-            'Occupational Safety and Health (AAS, BSc)',
-            'Social Work (BSW)',
-            'General Nursing (AAS, BSc)',
-            'Psychiatric Nursing (AAS, BSc)',
-        ];
+        // Get programmes from database, fallback to hardcoded list
+        $programmes = \App\Models\Programme::active()
+            ->byDepartment('ADMISSIONS')
+            ->ordered()
+            ->pluck('name')
+            ->toArray();
+
+        // Fallback to hardcoded programmes if database is empty
+        if (empty($programmes)) {
+            return [
+                'Early Childhood Care and Education (BA)',
+                'Medical Laboratory Technology (AAS, BSc)',
+                'Medical Ultrasound (AdvDip)',
+                'Radiography (BSc)',
+                'Environmental Health (AAS, BSc)',
+                'Occupational Safety and Health (AAS, BSc)',
+                'Social Work (BSW)',
+                'General Nursing (AAS, BSc)',
+                'Psychiatric Nursing (AAS, BSc)',
+            ];
+        }
+
+        return $programmes;
     }
 
     public function getIntakeTerms()

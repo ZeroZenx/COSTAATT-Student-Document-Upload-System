@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import AppLayout from '../Layouts/AppLayout';
-import { UserGroupIcon, ClipboardDocumentListIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
+import { UserGroupIcon, ClipboardDocumentListIcon, AcademicCapIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 
 export default function Admin() {
     return (
@@ -27,7 +27,7 @@ export default function Admin() {
                         </p>
                     </div>
                     
-                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
                         {/* Admissions Dashboard */}
                         <div className="card hover:shadow-lg transition-shadow duration-300">
                             <div className="card-body text-center">
@@ -68,6 +68,28 @@ export default function Admin() {
                                     className="btn-secondary w-full justify-center"
                                 >
                                     Access Registry Dashboard
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Programme Management */}
+                        <div className="card hover:shadow-lg transition-shadow duration-300">
+                            <div className="card-body text-center">
+                                <div className="flex justify-center mb-4">
+                                    <Cog6ToothIcon className="h-12 w-12 text-green-600" />
+                                </div>
+                                <h4 className="text-xl font-medium text-gray-900 mb-2">
+                                    Programme Management
+                                </h4>
+                                <p className="text-sm text-gray-600 mb-6">
+                                    Manage programmes and configure document requirements for each programme.
+                                </p>
+                                
+                                <Link
+                                    href="/admin/programmes"
+                                    className="btn bg-green-600 hover:bg-green-700 text-white w-full justify-center"
+                                >
+                                    Manage Programmes
                                 </Link>
                             </div>
                         </div>
