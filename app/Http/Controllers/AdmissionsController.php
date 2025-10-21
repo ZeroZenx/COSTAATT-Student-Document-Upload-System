@@ -377,31 +377,11 @@ class AdmissionsController extends Controller
                 'mime_type' => $file->getMimeType(),
             ]);
 
-            // Send upload confirmation email using Graph API
-            try {
-                $mailService = app(\App\Services\GraphMailService::class);
-                $success = $mailService->sendUploadConfirmation(
-                    $submission->email,
-                    $submission->student_id,
-                    $submission->programme,
-                    $docType,
-                    $submission->first_name . ' ' . $submission->last_name
-                );
-                
-                if ($success) {
-                    Log::info('Upload confirmation email sent successfully via Graph API', [
-                        'student_id' => $submission->student_id,
-                        'doc_type' => $docType
-                    ]);
-                } else {
-                    Log::warning('Failed to send upload confirmation email via Graph API', [
-                        'student_id' => $submission->student_id,
-                        'doc_type' => $docType
-                    ]);
-                }
-            } catch (\Exception $e) {
-                Log::warning('Upload confirmation email failed: ' . $e->getMessage());
-            }
+            // Email will be sent only when all documents are submitted
+            Log::info('Document uploaded successfully (email will be sent when all documents are submitted)', [
+                'student_id' => $submission->student_id,
+                'doc_type' => $docType
+            ]);
 
             Log::info('Document uploaded to OneDrive successfully', [
                 'submission_id' => $submission->id,
@@ -423,6 +403,61 @@ class AdmissionsController extends Controller
             ]);
 
             return back()->withErrors(['document' => 'Upload failed: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Send consolidated email with all uploaded documents (API endpoint)
+     */
+    public function sendAllDocumentsEmail(Request $request, Submission $submission)
+    {
+        try {
+            if ($submission->dept !== Submission::DEPT_ADMISSIONS) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid submission department'
+                ], 400);
+            }
+
+            Log::info('Sending all documents confirmation email', [
+                'submission_id' => $submission->id,
+                'student_id' => $submission->student_id
+            ]);
+
+            // Send consolidated email using Graph API
+            $mailService = app(\App\Services\GraphMailService::class);
+            $success = $mailService->sendAllDocumentsConfirmation($submission);
+            
+            if ($success) {
+                Log::info('All documents confirmation email sent successfully', [
+                    'submission_id' => $submission->id,
+                    'student_id' => $submission->student_id
+                ]);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Confirmation email sent successfully! Check your email for details.'
+                ]);
+            } else {
+                Log::warning('Failed to send all documents confirmation email', [
+                    'submission_id' => $submission->id,
+                    'student_id' => $submission->student_id
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send confirmation email. Please try again or contact support.'
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('All documents confirmation email failed: ' . $e->getMessage(), [
+                'submission_id' => $submission->id ?? 'unknown'
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error sending confirmation email: ' . $e->getMessage()
+            ], 500);
         }
     }
 

@@ -140,6 +140,7 @@ Route::prefix('student-docs/admissions')->name('admissions.')->group(function ()
     Route::get('/checklist/{submission}', [AdmissionsController::class, 'checklist'])->name('checklist');
     Route::post('/document/{submission}/{docType}/upload', [AdmissionsController::class, 'uploadDocument'])->name('upload');
     Route::get('/document/{submission}/{document}', [AdmissionsController::class, 'downloadDocument'])->name('download-document');
+    Route::post('/send-all-documents-email/{submission}', [AdmissionsController::class, 'sendAllDocumentsEmail'])->name('send-all-documents-email');
     Route::post('/submit/{submission}', [AdmissionsController::class, 'submit'])->name('submit');
     Route::get('/confirmation/{submission}', [AdmissionsController::class, 'confirmation'])->name('confirmation');
 });
